@@ -278,6 +278,23 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
             'realName' => $this->userName ?? '',
             'tstamp' => $GLOBALS['EXEC_TIME'],
         ];
+
+        $EXTCONF = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'];
+        if(isset($EXTCONF['groups']) && is_array($EXTCONF['groups'])) {
+            $request  = $this->oAuthProvider->getAuthenticatedRequest(
+                'get',
+                'https://graph.microsoft.com/v1.0/me/memberOf',
+                $this->accessToken,
+                []
+            );
+            $groups = $this->oAuthProvider->getParsedResponse($request);
+            foreach($groups['value'] as $group) {
+                if(isset($EXTCONF['groups'][$group['displayName']])) {
+                    $userFields = array_merge($userFields, $EXTCONF['groups'][$group['displayName']]);
+                }
+            }
+        }
+
         $databaseConnection = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getConnectionForTable($this->authenticationInformation['db_user']['table']);
 
@@ -287,22 +304,6 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
             $userFields['password'] = $this->generateHashedPassword();
             $userFields['admin'] = 0;
             $userFields['crdate'] = $GLOBALS['EXEC_TIME'];
-
-            $EXTCONF = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'];
-            if(isset($EXTCONF['groups']) && is_array($EXTCONF['groups'])) {
-                $request  = $this->oAuthProvider->getAuthenticatedRequest(
-                    'get',
-                    'https://graph.microsoft.com/v1.0/me/memberOf',
-                    $this->accessToken,
-                    []
-                );
-                $groups = $this->oAuthProvider->getParsedResponse($request);
-                foreach($groups['value'] as $group) {
-                    if(isset($EXTCONF['groups'][$group['displayName']])) {
-                        $userFields = array_merge($userFields, $EXTCONF['groups'][$group['displayName']]);
-                    }
-                }
-            }
 
             $databaseConnection->insert($this->authenticationInformation['db_user']['table'], $userFields);
         } else {
