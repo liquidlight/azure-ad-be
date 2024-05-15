@@ -32,6 +32,23 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
 ];
 ```
 
+If you want to append `usergroups` instead of replacing, add an array of `usergroupAppend` to each item:
+
+```php
+$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
+	'Group 1' => [
+		'usergroup' => '61',
+		'options' => 3,
+	],
+	'Group 1' => [
+		'usergroupAppend' => ['60'],
+	],
+	'Group 3' => [
+		'usergroupAppend' => ['18'],
+	],
+];
+```
+
 ### Disable TYPO3 login
 
 If you want to disable logging in via username and password, add the following to your `ext_localconf.php`

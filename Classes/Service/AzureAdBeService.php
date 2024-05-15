@@ -288,10 +288,21 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
                 []
             );
             $groups = $this->oAuthProvider->getParsedResponse($request);
+
             foreach($groups['value'] as $group) {
                 if(isset($EXTCONF['groups'][$group['displayName']])) {
-                    $userFields = array_merge($userFields, $EXTCONF['groups'][$group['displayName']]);
+                    $userFields = array_merge_recursive($userFields, $EXTCONF['groups'][$group['displayName']]);
                 }
+            }
+
+            if(isset($userFields['usergroupAppend'])) {
+                // Add currently set usergroups to append array
+                $userFields['usergroupAppend'] = array_merge(((array)$userFields['usergroup']) ?? [], (array)$userFields['usergroupAppend']);
+
+                // Reset usergroup to new items
+                $userFields['usergroup'] =  implode(',', $userFields['usergroupAppend']);
+
+                unset($userFields['usergroupAppend']);
             }
         }
 
