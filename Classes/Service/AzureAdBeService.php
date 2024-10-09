@@ -42,6 +42,8 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
 
     protected string $loginIdentifier = '';
 
+    protected array $jsonAccessTokenPayload = [];
+
     protected string $userName = '';
 
     /**
@@ -153,7 +155,8 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
                 }
 
                 $this->loginIdentifier = strtolower($emailAddress);
-                $this->userName = $jsonAccessTokenPayload['name'];
+                $this->jsonAccessTokenPayload = $jsonAccessTokenPayload;
+
                 return true;
             }
         }
@@ -287,8 +290,9 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
     private function createOrUpdateUserRecord(string $job)
     {
         $userFields = [
-            'realName' => $this->userName ?? '',
+            'realName' => $this->jsonAccessTokenPayload['name'] ?? '',
             'tstamp' => $GLOBALS['EXEC_TIME'],
+            'tx_azure_ad_be_payload_user' => json_encode($this->jsonAccessTokenPayload)
         ];
 
         $EXTCONF = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'];
@@ -300,6 +304,9 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
                 []
             );
             $groups = $this->oAuthProvider->getParsedResponse($request);
+
+            // Add the group information to the user record
+            $userFields['tx_azure_ad_be_payload_groups'] = json_encode($groups);
 
             foreach($groups['value'] as $group) {
                 if(isset($EXTCONF['groups'][$group['displayName']])) {

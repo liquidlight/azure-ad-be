@@ -5,6 +5,16 @@
       <trans-unit id="login.link">
         <source>Login with Microsoft</source>
       </trans-unit>
+
+      <trans-unit id="be_users.azure">
+        <source>Azure Information</source>
+      </trans-unit>
+      <trans-unit id="be_users.tx_azure_ad_be_payload_user">
+        <source>Azure User JSON Payload</source>
+      </trans-unit>
+      <trans-unit id="be_users.tx_azure_ad_be_payload_groups">
+        <source>Azure Group JSON Payload</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>
