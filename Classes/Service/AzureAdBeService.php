@@ -319,7 +319,7 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
                 $userFields['usergroupAppend'] = array_merge(((array)$userFields['usergroup']) ?? [], (array)$userFields['usergroupAppend']);
 
                 // Reset usergroup to new items
-                $userFields['usergroup'] =  implode(',', $userFields['usergroupAppend']);
+                $userFields['usergroup'] =  implode(',', array_unique($userFields['usergroupAppend']));
 
                 unset($userFields['usergroupAppend']);
             }
