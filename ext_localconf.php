@@ -4,6 +4,14 @@ declare(strict_types=1);
 defined('TYPO3') or die();
 
 (function () {
+    /**
+     * Default EXTCONF configuration
+     */
+    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'] = [
+        // What key should be used to identify groups
+        'groupsKeyIdentifier' => 'displayName'
+    ];
+
     $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][1650912385] = [
         'provider' => \DifferentTechnology\AzureAdBe\LoginProvider\ActiveDirectoryLoginProvider::class,
         'sorting' => 100,

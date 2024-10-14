@@ -33,6 +33,8 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
 ];
 ```
 
+### Append Group permissions
+
 If you want to append `usergroups` instead of replacing, add an array of `usergroupAppend` to each item:
 
 ```php
@@ -47,6 +49,16 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
 	'Group 3' => [
 		'usergroupAppend' => ['18'],
 	],
+];
+```
+
+### Configure Group Identifier
+
+If you wish to use a different identifier for the groups (e.g. the `id` instead of the `displayName`), you can configure this in your `ext_localconf.php`
+
+```php
+$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'] = [
+    'groupsKeyIdentifier' => 'id'
 ];
 ```
 

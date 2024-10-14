@@ -309,8 +309,8 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
             $userFields['tx_azure_ad_be_payload_groups'] = json_encode($groups);
 
             foreach($groups['value'] as $group) {
-                if(isset($EXTCONF['groups'][$group['displayName']])) {
-                    $userFields = array_merge_recursive($userFields, $EXTCONF['groups'][$group['displayName']]);
+                if(isset($EXTCONF['groups'][$group[$EXTCONF['groupsKeyIdentifier']]])) {
+                    $userFields = array_merge_recursive($userFields, $EXTCONF['groups'][$group[$EXTCONF['groupsKeyIdentifier']]]);
                 }
             }
 
