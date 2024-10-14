@@ -33,7 +33,7 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
 ];
 ```
 
-### Append Group permissions
+#### Append Group permissions
 
 If you want to append `usergroups` instead of replacing, add an array of `usergroupAppend` to each item:
 
@@ -43,7 +43,7 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
 		'usergroup' => '61',
 		'options' => 3,
 	],
-	'Group 1' => [
+	'Group 2' => [
 		'usergroupAppend' => ['60'],
 	],
 	'Group 3' => [
@@ -52,7 +52,7 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
 ];
 ```
 
-### Configure Group Identifier
+#### Configure Group Identifier
 
 If you wish to use a different identifier for the groups (e.g. the `id` instead of the `displayName`), you can configure this in your `ext_localconf.php`
 
@@ -69,3 +69,27 @@ If you want to disable logging in via username and password, add the following t
 ```php
 unset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][1433416747]);
 ```
+
+### Disable User Editing
+
+With logging in via Microsoft, you don't want the user changing their username and/or password within TYPO3 itself.
+
+Add the following `user.tsconfig` to disallow these changes:
+
+```
+setup {
+    fields {
+        realName.disabled = 1
+        email.disabled = 1
+        avatar.disabled = 1
+        lang.disabled = 1
+
+        passwordCurrent.disabled = 1
+        password.disabled = 1
+        password2.disabled = 1
+        mfaProviders.disabled = 1
+    }
+}
+```
+
+These can be wrapped in a condition based on user group, if you have a mix of SSO and normal users
