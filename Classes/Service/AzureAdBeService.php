@@ -107,7 +107,7 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
                 $_SESSION['state'] = $this->oAuthProvider->getState();
                 HttpUtility::redirect($authorizationUrl);
             } else {
-                $state = GeneralUtility::_GP('state');
+                $state = GeneralUtility::_GP('state') ?? null;
 
                 if (!$state || $state !== $_SESSION['state']) {
                     $this->destroySession();
@@ -148,7 +148,7 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
                 );
 
                 $jsonAccessTokenPayload = json_decode($decodedAccessTokenPayload, true);
-                $emailAddress = $jsonAccessTokenPayload['preferred_username'] ?? null;
+                $emailAddress = $jsonAccessTokenPayload['preferred_username'] ?? $jsonAccessTokenPayload['email'] ?? null;
 
                 if ($emailAddress === null) {
                     throw new \Exception('No email address in Entra ID profile', 1714651326);
