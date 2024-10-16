@@ -3,6 +3,8 @@ Former title: Azure Active Directory - TYPO3 Backend Login
 
 ## Setup
 
+### Env
+
 Add the following env parameters:
 
 ```
@@ -11,6 +13,12 @@ TYPO3_AZURE_AD_BE_CLIENT_SECRET=<your-secret>
 TYPO3_AZURE_AD_BE_URL_AUTHORIZE=https://login.microsoftonline.com/<see-your-endpoints>/oauth2/v2.0/authorize
 TYPO3_AZURE_AD_BE_URL_ACCESS_TOKEN=https://login.microsoftonline.com/<see-your-endpoints>/oauth2/v2.0/token
 ```
+
+### Cookies
+
+In TYPO3, set [`cookieSameSite`](https://docs.typo3.org/m/typo3/reference-coreapi/11.5/en-us/Configuration/Typo3ConfVars/BE.html#typo3ConfVars_be_cookieSameSite) to `none`
+
+On your server, ensure `session.cookie_samesite =` is set to nothing.
 
 ### Group permissions
 
