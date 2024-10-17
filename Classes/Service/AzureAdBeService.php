@@ -297,6 +297,9 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
 
         $EXTCONF = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'];
 
+		// Merge default Azure be_user options
+		$this->mergeUserFields($userFields, $EXTCONF['be_user_defaults'] ?? []);
+
         if(isset($EXTCONF['groups']) && is_array($EXTCONF['groups'])) {
             // Get extra group info
             $request  = $this->oAuthProvider->getAuthenticatedRequest(
@@ -316,16 +319,7 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
             foreach($azureGroups['value'] ?? [] as $group) {
                 $groupIdentifier = $group[$EXTCONF['groupsKeyIdentifier']] ?? null;
 
-                // Loop through local config for this group
-                foreach($EXTCONF['groups'][$groupIdentifier] ?? [] as $field => $value) {
-                    if(is_array($value)) {
-                        // Merge arrays
-                        $userFields[$field] = array_merge((array)$userFields[$field] ?? [], $value);
-                    } else {
-                        // Override other settings
-                        $userFields[$field] = $value;
-                    }
-                }
+				$this->mergeUserFields($userFields, $EXTCONF['groups'][$groupIdentifier] ?? []);
             }
 
             if(isset($userFields['usergroupAppend'])) {
@@ -371,5 +365,19 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
         $saltFactory = $passwordHashFactory->getDefaultHashInstance('BE');
         return $saltFactory->getHashedPassword($password);
     }
+
+	protected function mergeUserFields(array &$userFields, array $configuration): void
+	{
+		// Loop through local config for this group
+		foreach ($configuration as $field => $value) {
+			if (is_array($value)) {
+				// Merge arrays
+				$userFields[$field] = array_merge((array)$userFields[$field] ?? [], $value);
+			} else {
+				// Override other settings
+				$userFields[$field] = $value;
+			}
+		}
+	}
 
 }

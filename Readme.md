@@ -20,7 +20,23 @@ In TYPO3, set [`cookieSameSite`](https://docs.typo3.org/m/typo3/reference-coreap
 
 On your server, ensure `session.cookie_samesite =` is set to nothing.
 
-### Group permissions
+## User Permissions
+
+If you would like to set some default permissions for all users logging in via Azure, this can be done with the `be_user_defaults` array in the Azure AD `EXTCONF` configuration.
+
+For example, if you wish to set a group & other fields for everyone logging in via Azure, you can add the following:
+
+```php
+$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['be_user_defaults'] = [
+	// * Allows us to identify who is signed in via Azure (and apply TS config)
+	'usergroupAppend' => '61',
+
+	// * options = 3 - this enables the "Mount from groups" options for DB & filemounts
+	'options' => 3,
+];
+```
+
+## Group permissions
 
 You may wish to affect the users permissions or properties depending on which Entra ID / Azure AD group they are in.
 
@@ -41,7 +57,7 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
 ];
 ```
 
-#### Append Group permissions
+### Append Group permissions
 
 If you want to append `usergroups` instead of replacing, add an array of `usergroupAppend` to each item:
 
@@ -60,7 +76,7 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
 ];
 ```
 
-#### Configure Group Identifier
+### Configure Group Identifier
 
 If you wish to use a different identifier for the groups (e.g. the `id` instead of the `displayName`), you can configure this in your `ext_localconf.php`
 
@@ -70,7 +86,7 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'] = [
 ];
 ```
 
-### Disable TYPO3 login
+## Disable TYPO3 login
 
 If you want to disable logging in via username and password, add the following to your `ext_localconf.php`
 
@@ -78,7 +94,7 @@ If you want to disable logging in via username and password, add the following t
 unset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][1433416747]);
 ```
 
-### Disable User Editing
+## Disable User Editing
 
 With logging in via Microsoft, you don't want the user changing their username and/or password within TYPO3 itself.
 
