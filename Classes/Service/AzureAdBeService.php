@@ -296,21 +296,35 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
         ];
 
         $EXTCONF = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'];
+
         if(isset($EXTCONF['groups']) && is_array($EXTCONF['groups'])) {
+            // Get extra group info
             $request  = $this->oAuthProvider->getAuthenticatedRequest(
                 'get',
                 'https://graph.microsoft.com/v1.0/me/memberOf',
                 $this->accessToken,
                 []
             );
-            $groups = $this->oAuthProvider->getParsedResponse($request);
+
+            // Parse Azure group info
+            $azureGroups = $this->oAuthProvider->getParsedResponse($request);
 
             // Add the group information to the user record
-            $userFields['tx_azure_ad_be_payload_groups'] = json_encode($groups);
+            $userFields['tx_azure_ad_be_payload_groups'] = json_encode($azureGroups);
 
-            foreach($groups['value'] as $group) {
-                if(isset($EXTCONF['groups'][$group[$EXTCONF['groupsKeyIdentifier']]])) {
-                    $userFields = array_merge_recursive($userFields, $EXTCONF['groups'][$group[$EXTCONF['groupsKeyIdentifier']]]);
+            // Loop through Azure groups
+            foreach($azureGroups['value'] ?? [] as $group) {
+                $groupIdentifier = $group[$EXTCONF['groupsKeyIdentifier']] ?? null;
+
+                // Loop through local config for this group
+                foreach($EXTCONF['groups'][$groupIdentifier] ?? [] as $field => $value) {
+                    if(is_array($value)) {
+                        // Merge arrays
+                        $userFields[$field] = array_merge((array)$userFields[$field] ?? [], $value);
+                    } else {
+                        // Override other settings
+                        $userFields[$field] = $value;
+                    }
                 }
             }
 
