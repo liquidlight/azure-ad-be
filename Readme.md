@@ -28,11 +28,11 @@ For example, if you wish to set a group & other fields for everyone logging in v
 
 ```php
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['be_user_defaults'] = [
-	// * Allows us to identify who is signed in via Azure (and apply TS config)
-	'usergroupAppend' => '61',
+    // * Allows us to identify who is signed in via Azure (and apply TS config)
+    'usergroupAppend' => '61',
 
-	// * options = 3 - this enables the "Mount from groups" options for DB & filemounts
-	'options' => 3,
+    // * options = 3 - this enables the "Mount from groups" options for DB & filemounts
+    'options' => 3,
 ];
 ```
 
@@ -48,31 +48,46 @@ For example:
 
 ```php
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
-	'admin-group-name' => [
-		'admin' => 1
-	],
-	'editor-group' => [
-		'usergroup' => 12
-	]
+    'admin-group-name' => [
+        'admin' => 1
+    ],
+    'editor-group' => [
+        'usergroup' => 12
+    ]
 ];
 ```
 
 ### Append Group permissions
 
-If you want to append `usergroups` instead of replacing, add an array of `usergroupAppend` to each item:
+If you want to append items to a user instead of replacing them, you can use the `append` array item.
+
+- `usergroup`s can be an array or a comma separated list,
+- everything else in the `append` item is concatenated together with no further transforms
 
 ```php
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
-	'Group 1' => [
-		'usergroup' => '61',
-		'options' => 3,
-	],
-	'Group 2' => [
-		'usergroupAppend' => ['60'],
-	],
-	'Group 3' => [
-		'usergroupAppend' => ['18'],
-	],
+    'Group 1' => [
+        'usergroup' => '61',
+        'options' => 3,
+    ],
+
+    'Group 2' => [
+        'append' => [
+            'usergroup' => '60',
+        ]
+    ],
+
+    'Group 3' => [
+        'append' => [
+            'usergroup' => ['18', '19'],
+        ]
+    ],
+
+    'Group 4' => [
+        'append' => [
+            'usergroup' => '60, 62',
+        ]
+    ],
 ];
 ```
 

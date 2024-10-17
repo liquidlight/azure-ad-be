@@ -20,6 +20,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
+use TYPO3\CMS\Core\Utility\StringUtility;
 
 class AzureAdBeService extends AbstractService implements SingletonInterface
 {
@@ -297,8 +298,8 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
 
         $EXTCONF = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'];
 
-		// Merge default Azure be_user options
-		$this->mergeUserFields($userFields, $EXTCONF['be_user_defaults'] ?? []);
+        // Merge default Azure be_user options
+        $this->mergeUserFields($userFields, $EXTCONF['be_user_defaults'] ?? []);
 
         if(isset($EXTCONF['groups']) && is_array($EXTCONF['groups'])) {
             // Get extra group info
@@ -319,18 +320,7 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
             foreach($azureGroups['value'] ?? [] as $group) {
                 $groupIdentifier = $group[$EXTCONF['groupsKeyIdentifier']] ?? null;
 
-				$this->mergeUserFields($userFields, $EXTCONF['groups'][$groupIdentifier] ?? []);
-            }
-
-            if(isset($userFields['usergroupAppend'])) {
-                // Add currently set usergroups to append array
-                $usergroup = explode(',', implode(',', (array)$userFields['usergroup'] ?? []));
-                $userFields['usergroupAppend'] = array_merge($usergroup, (array)$userFields['usergroupAppend']);
-
-                // Reset usergroup to new items
-                $userFields['usergroup'] =  implode(',', array_unique($userFields['usergroupAppend']));
-
-                unset($userFields['usergroupAppend']);
+                $this->mergeUserFields($userFields, $EXTCONF['groups'][$groupIdentifier] ?? []);
             }
         }
 
@@ -366,18 +356,38 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
         return $saltFactory->getHashedPassword($password);
     }
 
-	protected function mergeUserFields(array &$userFields, array $configuration): void
-	{
-		// Loop through local config for this group
-		foreach ($configuration as $field => $value) {
-			if (is_array($value)) {
-				// Merge arrays
-				$userFields[$field] = array_merge((array)$userFields[$field] ?? [], $value);
-			} else {
-				// Override other settings
-				$userFields[$field] = $value;
-			}
-		}
-	}
+    protected function mergeUserFields(array &$userFields, array $configuration): void
+    {
+        // Get any append fields
+        if(isset($configuration['append'])) {
+            $append = $configuration['append'];
+            unset($configuration['append']);
+        }
+
+        // Loop through local config for this group
+        foreach ($configuration as $field => $value) {
+            // Override other settings
+            $userFields[$field] = $value;
+        }
+
+        // Loop through our appending fields
+        foreach($append ?? [] as $field => $value) {
+            switch($field) {
+                case 'usergroup':
+                    // Combine all our usergroups
+                    $groups = array_merge(
+                        GeneralUtility::trimExplode(',', $userFields[$field] ?? ''),
+                        is_array($value) ? $value : GeneralUtility::trimExplode(',', $value ?? ''),
+                    );
+
+                    // Ensure they are unique
+                    $userFields[$field] = StringUtility::uniqueList(implode(',', $groups));
+                    break;
+                default:
+                    $userFields[$field] = ($userFields[$field] ?? '') . $value;
+
+            }
+        }
+    }
 
 }
