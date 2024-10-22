@@ -14,7 +14,7 @@ use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\Random;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Service\AbstractService;
+use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
 use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
@@ -22,7 +22,7 @@ use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Utility\StringUtility;
 
-class AzureAdBeService extends AbstractService implements SingletonInterface
+class AzureAdBeService extends AbstractAuthenticationService implements SingletonInterface
 {
     use LoggerAwareTrait;
 
@@ -58,15 +58,6 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
     protected GenericProvider $oAuthProvider;
 
     /**
-     * Checks if service is available. In this case only in BE-Context
-     * @return bool TRUE if service is available
-     */
-    public function init(): bool
-    {
-        return (TYPO3_MODE === 'BE') && parent::init();
-    }
-
-    /**
      * Initializes authentication for this service.
      *
      * @param string $subType Subtype for authentication (either "getUserFE" or "getUserBE")
@@ -75,14 +66,9 @@ class AzureAdBeService extends AbstractService implements SingletonInterface
      * @param AbstractUserAuthentication $parentObject Calling object
      * @return void
      */
-    public function initAuth(
-        string $subType,
-        array $loginData,
-        array $authenticationInformation,
-        AbstractUserAuthentication $parentObject
-    ) {
+    public function initAuth($mode, $loginData, $authInfo, $pObj) {
         $this->loginData = $loginData;
-        $this->authenticationInformation = $authenticationInformation;
+        $this->authenticationInformation = $authInfo;
     }
 
     /**
