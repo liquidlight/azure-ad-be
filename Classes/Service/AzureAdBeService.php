@@ -4,23 +4,24 @@ declare(strict_types=1);
 
 namespace DifferentTechnology\AzureAdBe\Service;
 
-use Doctrine\DBAL\Driver\Exception;
-use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
-use League\OAuth2\Client\Provider\GenericProvider;
-use League\OAuth2\Client\Token\AccessTokenInterface;
 use Psr\Log\LoggerAwareTrait;
-use TYPO3\CMS\Core\Authentication\AbstractUserAuthentication;
-use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\Random;
-use TYPO3\CMS\Core\Database\Connection;
-use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
+use Doctrine\DBAL\Driver\Exception;
 use TYPO3\CMS\Core\SingletonInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\HttpUtility;
-use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
-use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\StringUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use Psr\Http\Message\ResponseFactoryInterface;
+use League\OAuth2\Client\Provider\GenericProvider;
+use TYPO3\CMS\Core\Http\PropagateResponseException;
+use League\OAuth2\Client\Token\AccessTokenInterface;
+use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
+use TYPO3\CMS\Core\Authentication\AbstractUserAuthentication;
+use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
+use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
+use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
+use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 
 class AzureAdBeService extends AbstractAuthenticationService implements SingletonInterface
 {
@@ -91,8 +92,15 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
                 $authorizationUrl = $this->oAuthProvider->getAuthorizationUrl([
                     'login_hint' => $email,
                 ]);
+
                 $_SESSION['state'] = $this->oAuthProvider->getState();
-                HttpUtility::redirect($authorizationUrl);
+
+                // Redirect to login
+                $response = GeneralUtility::makeInstance(ResponseFactoryInterface::class)
+                    ->createResponse(303)
+                    ->withAddedHeader('location', $authorizationUrl);
+                throw new PropagateResponseException($response);
+
             } else {
                 $state = GeneralUtility::_GP('state') ?? null;
 
