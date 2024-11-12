@@ -7,12 +7,16 @@ namespace DifferentTechnology\AzureAdBe\Service;
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Crypto\Random;
 use Doctrine\DBAL\Driver\Exception;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Security\RequestToken;
 use TYPO3\CMS\Core\Utility\StringUtility;
+use TYPO3\CMS\Core\Context\SecurityAspect;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use Psr\Http\Message\ResponseFactoryInterface;
+use TYPO3\CMS\Core\Utility\VersionNumberUtility;
 use League\OAuth2\Client\Provider\GenericProvider;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use League\OAuth2\Client\Token\AccessTokenInterface;
@@ -151,6 +155,14 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
 
                 $this->loginIdentifier = strtolower($emailAddress);
                 $this->jsonAccessTokenPayload = $jsonAccessTokenPayload;
+
+                if (version_compare(VersionNumberUtility::getNumericTypo3Version(), '12.0.0', '>=')) {
+                    // provide request-token
+                    $context = GeneralUtility::makeInstance(Context::class);
+                    $securityAspect = SecurityAspect::provideIn($context);
+                    $requestToken = RequestToken::create('core/user-auth/be');
+                    $securityAspect->setReceivedRequestToken($requestToken);
+                }
 
                 return true;
             }
