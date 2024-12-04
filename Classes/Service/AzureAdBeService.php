@@ -284,7 +284,6 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
                         Connection::PARAM_STR
                     )
                 ),
-                $this->authenticationInformation['db_user']['check_pid_clause'],
                 $this->authenticationInformation['db_user']['enable_clause']
             )
             ->execute()
