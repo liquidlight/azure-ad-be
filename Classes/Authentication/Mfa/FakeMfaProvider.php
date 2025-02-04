@@ -8,8 +8,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Authentication\Mfa\MfaProviderInterface;
 use TYPO3\CMS\Core\Authentication\Mfa\MfaProviderPropertyManager;
+use TYPO3\CMS\Core\Authentication\Mfa\MfaViewType;
 use TYPO3\CMS\Core\Context\Context;
-use TYPO3\CMS\Core\Http\Response;
+use TYPO3\CMS\Core\Http\ResponseFactory;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Fluid\View\StandaloneView;
 
 class FakeMfaProvider implements MfaProviderInterface
 {
@@ -17,9 +20,14 @@ class FakeMfaProvider implements MfaProviderInterface
 
 	protected ServerRequestInterface $request;
 
-	public function __construct(Context $context)
-	{
+	protected ResponseFactory $responseFactory;
+
+	public function __construct(
+		Context $context,
+		ResponseFactory $responseFactory
+	) {
 		$this->context = $context;
+		$this->responseFactory = $responseFactory;
 	}
 
 	public function canProcess(ServerRequestInterface $request): bool
@@ -42,7 +50,29 @@ class FakeMfaProvider implements MfaProviderInterface
 		MfaProviderPropertyManager $propertyManager,
 		string $type
 	): ResponseInterface {
-		return new Response();
+		$view = GeneralUtility::makeInstance(StandaloneView::class);
+		$view->setTemplateRootPaths(['EXT:azure_ad_be/Resources/Private/Templates/Mfa']);
+
+		switch ($type) {
+			case MfaViewType::SETUP:
+				$view->setTemplate('Setup');
+				break;
+			case MfaViewType::EDIT:
+				$view->setTemplate('Edit');
+				break;
+			case MfaViewType::AUTH:
+				$view->setTemplate('Auth');
+				break;
+		}
+
+		$response = $this->responseFactory->createResponse();
+		$response->getBody()->write(
+			$view
+				->assign('providerIdentifier', $propertyManager->getIdentifier())
+				->render()
+		);
+
+		return $response;
 	}
 
 	public function verify(
