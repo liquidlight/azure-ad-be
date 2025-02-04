@@ -52,7 +52,9 @@ class FakeMfaProvider implements MfaProviderInterface
 		$properties['attempts'] = 0;
 		$properties['lastUsed'] = $this->context->getPropertyFromAspect('date', 'timestamp');
 
-		return $propertyManager->updateProperties($properties);
+		$propertyManager->updateProperties($properties);
+
+		return !empty($propertyManager->getUser()->user['tx_azure_ad_be_payload_user']);
 	}
 
 	public function activate(
