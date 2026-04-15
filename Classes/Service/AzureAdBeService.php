@@ -307,22 +307,14 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
         $this->mergeUserFields($userFields, $EXTCONF['be_user_defaults'] ?? []);
 
         if(isset($EXTCONF['groups']) && is_array($EXTCONF['groups'])) {
-            // Get extra group info
-            $request  = $this->oAuthProvider->getAuthenticatedRequest(
-                'get',
-                'https://graph.microsoft.com/v1.0/me/memberOf',
-                $this->accessToken,
-                []
-            );
-
-            // Parse Azure group info
-            $azureGroups = $this->oAuthProvider->getParsedResponse($request);
+            // Get all group memberships, following pagination
+            $groups = $this->getGroups();
 
             // Add the group information to the user record
-            $userFields['tx_azure_ad_be_payload_groups'] = json_encode($azureGroups);
+            $userFields['tx_azure_ad_be_payload_groups'] = json_encode($groups);
 
             // Loop through Azure groups
-            foreach($azureGroups['value'] ?? [] as $group) {
+            foreach($groups as $group) {
                 $groupIdentifier = $group[$EXTCONF['groupsKeyIdentifier']] ?? null;
 
                 $this->mergeUserFields($userFields, $EXTCONF['groups'][$groupIdentifier] ?? []);
@@ -347,6 +339,30 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
                 ['username' => $this->loginIdentifier]
             );
         }
+    }
+
+    /**
+     * Fetches all group memberships for the authenticated user, following
+     * @odata.nextLink pagination until all pages are retrieved.
+     */
+    protected function getGroups(): array
+    {
+        $url = 'https://graph.microsoft.com/v1.0/me/memberOf';
+        $groups = [];
+
+        do {
+            $request = $this->oAuthProvider->getAuthenticatedRequest(
+                'get',
+                $url,
+                $this->accessToken,
+                []
+            );
+            $response = $this->oAuthProvider->getParsedResponse($request);
+            $groups = [...$groups, ...($response['value'] ?? [])];
+            $url = $response['@odata.nextLink'] ?? null;
+        } while ($url !== null);
+
+        return $groups;
     }
 
     /**
