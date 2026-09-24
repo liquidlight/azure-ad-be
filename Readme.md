@@ -1,6 +1,9 @@
 # Microsoft Entra ID - TYPO3 Backend Login
 Former title: Azure Active Directory - TYPO3 Backend Login
 
+> [!TIP]
+> This was originally forked from [different-technology/azure-ad-be](https://github.com/different-technology/azure-ad-be) - big thanks to them for the original code
+
 ## Setup
 
 ### Env
