@@ -16,7 +16,28 @@
   },
   "extra": {
     "typo3/cms": {
-      "extension-key": "azure_ad_be"
+      "extension-key": "azure_ad_be",
+      "web-dir": ".Build/public"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "DifferentTechnology\\AzureAdBe\\Tests\\": "Tests"
+    }
+  },
+  "require-dev": {
+    "typo3/testing-framework": "^7.0"
+  },
+  "config": {
+    "lock": false,
+    "vendor-dir": ".Build/vendor",
+    "allow-plugins": {
+      "typo3/cms-composer-installers": true,
+      "typo3/class-alias-loader": true
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf .Build",
+    "test-unit": "phpunit --no-coverage --testsuite=\"Unit tests\""
   }
 }

@@ -1,0 +1,42 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unit:
+    name: Unit tests (TYPO3 ${{ matrix.typo3 }}, PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { typo3: '11.5', php: '7.4' }
+          - { typo3: '11.5', php: '8.1' }
+          - { typo3: '11.5', php: '8.2' }
+          - { typo3: '12.4', php: '8.1' }
+          - { typo3: '12.4', php: '8.2' }
+          - { typo3: '12.4', php: '8.3' }
+    # PHP 7.4 resolves PHPUnit 9.6, which warns that phpunit.xml uses 10.5-only
+    # settings. The warning is harmless: the test suite and failure rules still apply.
+    env:
+      # Every public TYPO3 11.5/12.4 release has security advisories against it,
+      # which Composer blocks by default. Only affects this test install.
+      COMPOSER_NO_BLOCKING: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer require --no-update "typo3/cms-core:^${{ matrix.typo3 }}"
+          composer update --no-interaction --no-progress
+
+      - name: Run unit tests
+        run: composer test-unit
