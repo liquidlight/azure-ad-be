@@ -1,14 +1,14 @@
 <?php
-/** @var string $_EXTKEY */
 $EM_CONF[$_EXTKEY] = [
-    'title' => 'Azure Active Directory - TYPO3 Backend Login',
-    'description' => 'Authenticate backend users against Azure AD',
+    'title' => 'Microsoft Entra ID - TYPO3 Backend Login',
+    'description' => 'Authenticate backend users against Microsoft Entra ID',
     'category' => 'plugin',
-    'author' => 'different.technology',
-    'author_email' => 'typo3@markus-hoelzle.de',
+    'author' => 'Liquid Light',
+    'author_email' => 'info@liquidlight.co.uk',
+    'author_company' => 'Liquid Light Ltd',
     'state' => 'stable',
     'clearCacheOnLoad' => 1,
-    'version' => '',
+    'version' => '1.0.0',
     'constraints' => [
         'depends' => [
             'typo3' => '12.4.0-13.4.99',

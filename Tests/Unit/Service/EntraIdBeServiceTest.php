@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace DifferentTechnology\AzureAdBe\Tests\Unit\Service;
+namespace LiquidLight\EntraIdBe\Tests\Unit\Service;
 
-use DifferentTechnology\AzureAdBe\Service\AzureAdBeService;
+use LiquidLight\EntraIdBe\Service\EntraIdBeService;
 use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use PHPUnit\Framework\Attributes\Test;
@@ -16,7 +16,7 @@ use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
-final class AzureAdBeServiceTest extends UnitTestCase
+final class EntraIdBeServiceTest extends UnitTestCase
 {
     private const EXEC_TIME = 1700000000;
 
@@ -28,10 +28,10 @@ final class AzureAdBeServiceTest extends UnitTestCase
     ];
 
     private const ENV_KEYS = [
-        'TYPO3_AZURE_AD_BE_CLIENT_ID',
-        'TYPO3_AZURE_AD_BE_CLIENT_SECRET',
-        'TYPO3_AZURE_AD_BE_URL_AUTHORIZE',
-        'TYPO3_AZURE_AD_BE_URL_ACCESS_TOKEN',
+        'TYPO3_ENTRA_ID_BE_CLIENT_ID',
+        'TYPO3_ENTRA_ID_BE_CLIENT_SECRET',
+        'TYPO3_ENTRA_ID_BE_URL_AUTHORIZE',
+        'TYPO3_ENTRA_ID_BE_URL_ACCESS_TOKEN',
     ];
 
     private array $originalEnv = [];
@@ -42,7 +42,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
 
         $GLOBALS['EXEC_TIME'] = self::EXEC_TIME;
         // Mirrors the default set in ext_localconf.php
-        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'] = [
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be'] = [
             'groupsKeyIdentifier' => 'displayName',
         ];
 
@@ -66,12 +66,12 @@ final class AzureAdBeServiceTest extends UnitTestCase
 
     private function setProperty(object $object, string $property, mixed $value): void
     {
-        (new \ReflectionProperty(AzureAdBeService::class, $property))->setValue($object, $value);
+        (new \ReflectionProperty(EntraIdBeService::class, $property))->setValue($object, $value);
     }
 
     private function callMethod(object $object, string $method, array $arguments = []): mixed
     {
-        return (new \ReflectionMethod(AzureAdBeService::class, $method))->invokeArgs($object, $arguments);
+        return (new \ReflectionMethod(EntraIdBeService::class, $method))->invokeArgs($object, $arguments);
     }
 
     /**
@@ -79,8 +79,8 @@ final class AzureAdBeServiceTest extends UnitTestCase
      */
     private function mergeUserFields(array $userFields, array $configuration): array
     {
-        $method = new \ReflectionMethod(AzureAdBeService::class, 'mergeUserFields');
-        $method->invokeArgs(new AzureAdBeService(), [&$userFields, $configuration]);
+        $method = new \ReflectionMethod(EntraIdBeService::class, 'mergeUserFields');
+        $method->invokeArgs(new EntraIdBeService(), [&$userFields, $configuration]);
         return $userFields;
     }
 
@@ -177,7 +177,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
                 ]
             );
 
-        $subject = new AzureAdBeService();
+        $subject = new EntraIdBeService();
         $this->setProperty($subject, 'oAuthProvider', $provider);
         $this->setProperty($subject, 'accessToken', $accessToken);
 
@@ -198,7 +198,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
             ->willReturn($this->createMock(RequestInterface::class));
         $provider->expects(self::once())->method('getParsedResponse')->willReturn([]);
 
-        $subject = new AzureAdBeService();
+        $subject = new EntraIdBeService();
         $this->setProperty($subject, 'oAuthProvider', $provider);
         $this->setProperty($subject, 'accessToken', $this->createMock(AccessTokenInterface::class));
 
@@ -206,11 +206,11 @@ final class AzureAdBeServiceTest extends UnitTestCase
     }
 
     /**
-     * @return AzureAdBeService&MockObject
+     * @return EntraIdBeService&MockObject
      */
-    private function createUserServiceMock(): AzureAdBeService
+    private function createUserServiceMock(): EntraIdBeService
     {
-        $subject = $this->getMockBuilder(AzureAdBeService::class)
+        $subject = $this->getMockBuilder(EntraIdBeService::class)
             ->onlyMethods(['getUserRecord', 'getGroups', 'generateHashedPassword'])
             ->getMock();
         $subject->initAuth('getUserBE', ['status' => 'login'], self::AUTH_INFO, null);
@@ -266,7 +266,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
             [
                 'realName' => 'Jane Doe',
                 'tstamp' => self::EXEC_TIME,
-                'tx_azure_ad_be_payload_user' => json_encode(['name' => 'Jane Doe', 'preferred_username' => 'Jane.Doe@example.com']),
+                'tx_entraidbe_payload_user' => json_encode(['name' => 'Jane Doe', 'preferred_username' => 'Jane.Doe@example.com']),
                 'username' => 'jane.doe@example.com',
                 'email' => 'jane.doe@example.com',
                 'password' => 'hashed-password',
@@ -288,13 +288,13 @@ final class AzureAdBeServiceTest extends UnitTestCase
 
         self::assertSame($record, $subject->getUser());
         self::assertSame(['username' => 'jane.doe@example.com'], $identifier);
-        self::assertSame(['realName', 'tstamp', 'tx_azure_ad_be_payload_user'], array_keys($writtenFields));
+        self::assertSame(['realName', 'tstamp', 'tx_entraidbe_payload_user'], array_keys($writtenFields));
     }
 
     #[Test]
     public function getUserMergesBeUserDefaults(): void
     {
-        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['be_user_defaults'] = [
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be']['be_user_defaults'] = [
             'lang' => 'de',
             'append' => ['usergroup' => '1,2'],
         ];
@@ -311,10 +311,10 @@ final class AzureAdBeServiceTest extends UnitTestCase
     #[Test]
     public function getUserAppliesConfigurationOfMatchingEntraIdGroupsOnly(): void
     {
-        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['be_user_defaults'] = [
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be']['be_user_defaults'] = [
             'append' => ['usergroup' => '1'],
         ];
-        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be']['groups'] = [
             'Editors' => ['append' => ['usergroup' => '2,3']],
             'Admins' => ['admin' => 1, 'append' => ['usergroup' => '3,4']],
             'Unassigned' => ['append' => ['usergroup' => '99']],
@@ -333,14 +333,14 @@ final class AzureAdBeServiceTest extends UnitTestCase
 
         self::assertSame('1,2,3,4', $writtenFields['usergroup']);
         self::assertSame(1, $writtenFields['admin']);
-        self::assertSame(json_encode($entraGroups), $writtenFields['tx_azure_ad_be_payload_groups']);
+        self::assertSame(json_encode($entraGroups), $writtenFields['tx_entraidbe_payload_groups']);
     }
 
     #[Test]
     public function getUserMatchesGroupsOnConfiguredKeyIdentifier(): void
     {
-        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groupsKeyIdentifier'] = 'id';
-        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be']['groupsKeyIdentifier'] = 'id';
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be']['groups'] = [
             'Editors' => ['append' => ['usergroup' => '2']],
             'group-guid' => ['append' => ['usergroup' => '5']],
         ];
@@ -357,7 +357,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
     #[Test]
     public function getUserReturnsNullWhenNotLoggingIn(): void
     {
-        $subject = new AzureAdBeService();
+        $subject = new EntraIdBeService();
         $subject->initAuth('getUserBE', ['status' => 'logout'], self::AUTH_INFO, null);
         $this->setProperty($subject, 'loginIdentifier', 'jane.doe@example.com');
 
@@ -367,7 +367,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
     #[Test]
     public function getUserReturnsNullWithoutLoginIdentifier(): void
     {
-        $subject = new AzureAdBeService();
+        $subject = new EntraIdBeService();
         $subject->initAuth('getUserBE', ['status' => 'login'], self::AUTH_INFO, null);
 
         self::assertNull($subject->getUser());
@@ -376,13 +376,13 @@ final class AzureAdBeServiceTest extends UnitTestCase
     #[Test]
     public function authUserReturnsContinueCodeWithoutLoginIdentifier(): void
     {
-        self::assertSame(100, (new AzureAdBeService())->authUser([]));
+        self::assertSame(100, (new EntraIdBeService())->authUser([]));
     }
 
     #[Test]
     public function authUserAuthenticatesOnceLoginIdentifierIsSet(): void
     {
-        $subject = new AzureAdBeService();
+        $subject = new EntraIdBeService();
         $this->setProperty($subject, 'loginIdentifier', 'jane.doe@example.com');
 
         self::assertSame(300, $subject->authUser([]));
@@ -393,7 +393,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
     {
         $loginData = ['uname' => 'admin', 'uident' => 'password'];
 
-        self::assertFalse((new AzureAdBeService())->processLoginData($loginData, 'normal'));
+        self::assertFalse((new EntraIdBeService())->processLoginData($loginData, 'normal'));
         self::assertSame(['uname' => 'admin', 'uident' => 'password'], $loginData);
     }
 
@@ -403,7 +403,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         if ($request !== null) {
             $authInfo['request'] = $request;
         }
-        $subject = new AzureAdBeService();
+        $subject = new EntraIdBeService();
         $subject->initAuth('processLoginDataBE', [], $authInfo, null);
 
         return $this->callMethod($subject, 'getRequestParameter', [$name]);
@@ -438,13 +438,13 @@ final class AzureAdBeServiceTest extends UnitTestCase
 
     private function getAuthorizationScopes(): array
     {
-        $_ENV['TYPO3_AZURE_AD_BE_CLIENT_ID'] = 'client-id';
-        $_ENV['TYPO3_AZURE_AD_BE_CLIENT_SECRET'] = 'client-secret';
-        $_ENV['TYPO3_AZURE_AD_BE_URL_AUTHORIZE'] = 'https://login.example.com/authorize';
-        $_ENV['TYPO3_AZURE_AD_BE_URL_ACCESS_TOKEN'] = 'https://login.example.com/token';
+        $_ENV['TYPO3_ENTRA_ID_BE_CLIENT_ID'] = 'client-id';
+        $_ENV['TYPO3_ENTRA_ID_BE_CLIENT_SECRET'] = 'client-secret';
+        $_ENV['TYPO3_ENTRA_ID_BE_URL_AUTHORIZE'] = 'https://login.example.com/authorize';
+        $_ENV['TYPO3_ENTRA_ID_BE_URL_ACCESS_TOKEN'] = 'https://login.example.com/token';
 
         /** @var GenericProvider $provider */
-        $provider = $this->callMethod(new AzureAdBeService(), 'getOAuthProvider', ['https://example.com/typo3/']);
+        $provider = $this->callMethod(new EntraIdBeService(), 'getOAuthProvider', ['https://example.com/typo3/']);
         parse_str((string)parse_url($provider->getAuthorizationUrl(), PHP_URL_QUERY), $query);
 
         return explode(' ', $query['scope']);
@@ -459,7 +459,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
     #[Test]
     public function oAuthProviderRequestsDirectoryScopeWhenGroupsAreConfigured(): void
     {
-        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [];
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be']['groups'] = [];
 
         self::assertSame(
             ['User.Read', 'profile', 'openid', 'email', 'Directory.Read.All'],

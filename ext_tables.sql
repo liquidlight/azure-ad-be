@@ -1,7 +1,7 @@
 #
-# Table structure for table 'sys_file_storage'
+# Table structure for table 'be_users'
 #
 CREATE TABLE be_users (
-    tx_azure_ad_be_payload_user mediumtext,
-    tx_azure_ad_be_payload_groups mediumtext
+    tx_entraidbe_payload_user mediumtext,
+    tx_entraidbe_payload_groups mediumtext
 );

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace DifferentTechnology\AzureAdBe\Tests\Unit\LoginProvider;
+namespace LiquidLight\EntraIdBe\Tests\Unit\LoginProvider;
 
-use DifferentTechnology\AzureAdBe\LoginProvider\ActiveDirectoryLoginProvider;
+use LiquidLight\EntraIdBe\LoginProvider\EntraIdLoginProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Fluid\View\FluidViewAdapter;
@@ -13,7 +13,7 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\View\TemplatePaths;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
-final class ActiveDirectoryLoginProviderTest extends UnitTestCase
+final class EntraIdLoginProviderTest extends UnitTestCase
 {
     protected function setUp(): void
     {
@@ -40,12 +40,12 @@ final class ActiveDirectoryLoginProviderTest extends UnitTestCase
         $renderingContext->setTemplatePaths($templatePaths);
         $view = new FluidViewAdapter(new TemplateView($renderingContext));
 
-        $template = (new ActiveDirectoryLoginProvider())->modifyView(new ServerRequest(), $view);
+        $template = (new EntraIdLoginProvider())->modifyView(new ServerRequest(), $view);
 
         self::assertSame('LoginForm', $template);
         // Last path wins, so the extension's LoginForm.html is found before any core template
         self::assertSame(
-            ['EXT:backend/Resources/Private/Templates', 'EXT:azure_ad_be/Resources/Private/Templates'],
+            ['EXT:backend/Resources/Private/Templates', 'EXT:ll_entra_id_be/Resources/Private/Templates'],
             $templatePaths->getTemplateRootPaths()
         );
     }
