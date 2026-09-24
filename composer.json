@@ -7,7 +7,9 @@
   "require": {
     "ext-json": "*",
     "league/oauth2-client": "^2.6",
-    "typo3/cms-core": "^11.5 || ^12.4"
+    "typo3/cms-core": "^12.4 || ^13.4",
+    "typo3/cms-backend": "^12.4 || ^13.4",
+    "typo3/cms-fluid": "^12.4 || ^13.4"
   },
   "autoload": {
     "psr-4": {
@@ -16,7 +18,28 @@
   },
   "extra": {
     "typo3/cms": {
-      "extension-key": "azure_ad_be"
+      "extension-key": "azure_ad_be",
+      "web-dir": ".Build/public"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "DifferentTechnology\\AzureAdBe\\Tests\\": "Tests"
+    }
+  },
+  "require-dev": {
+    "typo3/testing-framework": "^8.2"
+  },
+  "config": {
+    "lock": false,
+    "vendor-dir": ".Build/vendor",
+    "allow-plugins": {
+      "typo3/cms-composer-installers": true,
+      "typo3/class-alias-loader": true
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf .Build",
+    "test-unit": "phpunit --no-coverage --testsuite=\"Unit tests\""
   }
 }
