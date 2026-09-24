@@ -1,9 +1,24 @@
 {
-  "name": "different-technology/azure-ad-be",
+  "name": "liquidlight/typo3-entra-id-be",
   "type": "typo3-cms-extension",
   "description": "Microsoft Entra ID - TYPO3 Backend Login",
-  "homepage": "https://different.technology/",
+  "homepage": "https://github.com/liquidlight/typo3-entra-id-be",
   "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "Liquid Light",
+      "email": "info@liquidlight.co.uk",
+      "homepage": "https://www.liquidlight.co.uk/"
+    },
+    {
+      "name": "different.technology",
+      "homepage": "https://different.technology"
+    },
+    {
+      "name": "Mike Street",
+      "email": "mike@liquidlight.co.uk"
+    }
+  ],
   "require": {
     "ext-json": "*",
     "league/oauth2-client": "^2.6",
@@ -11,14 +26,17 @@
     "typo3/cms-backend": "^12.4 || ^13.4",
     "typo3/cms-fluid": "^12.4 || ^13.4"
   },
+  "conflict": {
+    "different-technology/azure-ad-be": "*"
+  },
   "autoload": {
     "psr-4": {
-      "DifferentTechnology\\AzureAdBe\\": "Classes/"
+      "LiquidLight\\EntraIdBe\\": "Classes/"
     }
   },
   "extra": {
     "typo3/cms": {
-      "extension-key": "azure_ad_be",
+      "extension-key": "ll_entra_id_be",
       "web-dir": ".Build/public"
     }
   },

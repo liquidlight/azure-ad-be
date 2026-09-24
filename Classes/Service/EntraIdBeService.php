@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace DifferentTechnology\AzureAdBe\Service;
+namespace LiquidLight\EntraIdBe\Service;
 
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Crypto\Random;
@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 
-class AzureAdBeService extends AbstractAuthenticationService implements SingletonInterface
+class EntraIdBeService extends AbstractAuthenticationService implements SingletonInterface
 {
     use LoggerAwareTrait;
 
@@ -120,7 +120,7 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
                             '"invalid_client" - You may have to refresh your client secret. ' .
                             'Please visit ' .
                             'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Credentials/appId/' .
-                            $_ENV['TYPO3_AZURE_AD_BE_CLIENT_ID'],
+                            $_ENV['TYPO3_ENTRA_ID_BE_CLIENT_ID'],
                             1714651325,
                             $exception
                         );
@@ -217,15 +217,15 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
     private function getOAuthProvider(string $returnUrl): GenericProvider
     {
         $scopes = ['User.Read', 'profile', 'openid', 'email'];
-        if(isset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'])) {
+        if(isset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be']['groups'])) {
             $scopes[] = 'Directory.Read.All';
         }
         return new GenericProvider([
-            'clientId' => $_ENV['TYPO3_AZURE_AD_BE_CLIENT_ID'],
-            'clientSecret' => $_ENV['TYPO3_AZURE_AD_BE_CLIENT_SECRET'],
+            'clientId' => $_ENV['TYPO3_ENTRA_ID_BE_CLIENT_ID'],
+            'clientSecret' => $_ENV['TYPO3_ENTRA_ID_BE_CLIENT_SECRET'],
             'redirectUri' => $returnUrl,
-            'urlAuthorize' => $_ENV['TYPO3_AZURE_AD_BE_URL_AUTHORIZE'],
-            'urlAccessToken' => $_ENV['TYPO3_AZURE_AD_BE_URL_ACCESS_TOKEN'],
+            'urlAuthorize' => $_ENV['TYPO3_ENTRA_ID_BE_URL_AUTHORIZE'],
+            'urlAccessToken' => $_ENV['TYPO3_ENTRA_ID_BE_URL_ACCESS_TOKEN'],
             'urlResourceOwnerDetails' => '',
             'scopes' => implode(' ', $scopes),
         ]);
@@ -308,12 +308,12 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
         $userFields = [
             'realName' => $this->jsonAccessTokenPayload['name'] ?? '',
             'tstamp' => $GLOBALS['EXEC_TIME'],
-            'tx_azure_ad_be_payload_user' => json_encode($this->jsonAccessTokenPayload)
+            'tx_entraidbe_payload_user' => json_encode($this->jsonAccessTokenPayload)
         ];
 
-        $EXTCONF = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'];
+        $EXTCONF = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be'];
 
-        // Merge default Azure be_user options
+        // Merge default Entra ID be_user options
         $this->mergeUserFields($userFields, $EXTCONF['be_user_defaults'] ?? []);
 
         if(isset($EXTCONF['groups']) && is_array($EXTCONF['groups'])) {
@@ -321,9 +321,9 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
             $groups = $this->getGroups();
 
             // Add the group information to the user record
-            $userFields['tx_azure_ad_be_payload_groups'] = json_encode($groups);
+            $userFields['tx_entraidbe_payload_groups'] = json_encode($groups);
 
-            // Loop through Azure groups
+            // Loop through Entra ID groups
             foreach($groups as $group) {
                 $groupIdentifier = $group[$EXTCONF['groupsKeyIdentifier']] ?? null;
 
