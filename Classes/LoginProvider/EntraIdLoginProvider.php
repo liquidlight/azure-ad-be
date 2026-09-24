@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace DifferentTechnology\AzureAdBe\LoginProvider;
+namespace LiquidLight\EntraIdBe\LoginProvider;
 
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Controller\LoginController;
@@ -13,7 +13,7 @@ use TYPO3\CMS\Core\View\ViewInterface;
 use TYPO3\CMS\Fluid\View\FluidViewAdapter;
 use TYPO3\CMS\Fluid\View\StandaloneView;
 
-class ActiveDirectoryLoginProvider implements LoginProviderInterface
+class EntraIdLoginProvider implements LoginProviderInterface
 {
     public const TEMPLATE_ROOT_PATH = 'EXT:azure_ad_be/Resources/Private/Templates';
 

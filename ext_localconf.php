@@ -7,25 +7,25 @@ defined('TYPO3') or die();
     /**
      * Default EXTCONF configuration
      */
-    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be'] = [
+    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be'] = [
         // What key should be used to identify groups
         'groupsKeyIdentifier' => 'displayName'
     ];
 
     $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][1650912385] = [
-        'provider' => \DifferentTechnology\AzureAdBe\LoginProvider\ActiveDirectoryLoginProvider::class,
+        'provider' => \LiquidLight\EntraIdBe\LoginProvider\EntraIdLoginProvider::class,
         'sorting' => 100,
 		'iconIdentifier' => 'actions-brand-windows',
-        'label' => 'LLL:EXT:azure_ad_be/Resources/Private/Language/locallang.xlf:login.link'
+        'label' => 'LLL:EXT:ll_entra_id_be/Resources/Private/Language/locallang.xlf:login.link'
     ];
 
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addService(
-        'azure_ad_be',
+        'll_entra_id_be',
         'auth',
-        'tx_azure_ad_be',
+        'tx_entraidbe',
         [
-            'title' => 'Azure AD Authentication',
-            'description' => 'Azure AD service for backend',
+            'title' => 'Entra ID Authentication',
+            'description' => 'Entra ID service for backend',
             'subtype' => 'processLoginDataBE,getUserBE,authUserBE',
             'available' => true,
             'priority' => 100,
@@ -33,7 +33,7 @@ defined('TYPO3') or die();
             'quality' => 50,
             'os' => '',
             'exec' => '',
-            'className' => \DifferentTechnology\AzureAdBe\Service\AzureAdBeService::class
+            'className' => \LiquidLight\EntraIdBe\Service\EntraIdBeService::class
         ]
     );
 })();
