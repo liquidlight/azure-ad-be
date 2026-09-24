@@ -6,7 +6,7 @@ namespace DifferentTechnology\AzureAdBe\Service;
 
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Crypto\Random;
-use Doctrine\DBAL\Driver\Exception;
+use Doctrine\DBAL\Exception;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Core\Database\Connection;
@@ -15,12 +15,11 @@ use TYPO3\CMS\Core\Utility\StringUtility;
 use TYPO3\CMS\Core\Context\SecurityAspect;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use Psr\Http\Message\ResponseFactoryInterface;
-use TYPO3\CMS\Core\Utility\VersionNumberUtility;
+use TYPO3\CMS\Core\Http\RedirectResponse;
+use Psr\Http\Message\ServerRequestInterface;
 use League\OAuth2\Client\Provider\GenericProvider;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use League\OAuth2\Client\Token\AccessTokenInterface;
-use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Core\Authentication\AbstractUserAuthentication;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
@@ -89,10 +88,10 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
         // Pre-process the login only if no password has been submitted
         if (empty($loginData['uident'])) {
             $this->initializeSession();
-            $authorizationCode = GeneralUtility::_GP('code');
+            $authorizationCode = $this->getRequestParameter('code');
             $this->oAuthProvider = $this->getOAuthProvider($this->getReturnURL());
             if (!$authorizationCode) {
-                $email = GeneralUtility::_POST('ad_email');
+                $email = $this->getRequestParameter('ad_email');
                 $authorizationUrl = $this->oAuthProvider->getAuthorizationUrl([
                     'login_hint' => $email,
                 ]);
@@ -100,13 +99,10 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
                 $_SESSION['state'] = $this->oAuthProvider->getState();
 
                 // Redirect to login
-                $response = GeneralUtility::makeInstance(ResponseFactoryInterface::class)
-                    ->createResponse(303)
-                    ->withAddedHeader('location', $authorizationUrl);
-                throw new PropagateResponseException($response);
+                throw new PropagateResponseException(new RedirectResponse($authorizationUrl, 303));
 
             } else {
-                $state = GeneralUtility::_GP('state') ?? null;
+                $state = $this->getRequestParameter('state');
 
                 if (!$state || $state !== $_SESSION['state']) {
                     $this->destroySession();
@@ -156,13 +152,11 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
                 $this->loginIdentifier = strtolower($emailAddress);
                 $this->jsonAccessTokenPayload = $jsonAccessTokenPayload;
 
-                if (version_compare(VersionNumberUtility::getNumericTypo3Version(), '12.0.0', '>=')) {
-                    // provide request-token
-                    $context = GeneralUtility::makeInstance(Context::class);
-                    $securityAspect = SecurityAspect::provideIn($context);
-                    $requestToken = RequestToken::create('core/user-auth/be');
-                    $securityAspect->setReceivedRequestToken($requestToken);
-                }
+                // The Entra ID callback is a GET request without a TYPO3 request-token, so provide one
+                $context = GeneralUtility::makeInstance(Context::class);
+                $securityAspect = SecurityAspect::provideIn($context);
+                $requestToken = RequestToken::create('core/user-auth/be');
+                $securityAspect->setReceivedRequestToken($requestToken);
 
                 return true;
             }
@@ -170,14 +164,32 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
         return false;
     }
 
-    private function initializeSession()
+    /**
+     * Reads a parameter from the submitted form, falling back to the query string
+     */
+    protected function getRequestParameter(string $name): mixed
+    {
+        $request = $this->authenticationInformation['request'] ?? null;
+        if (!$request instanceof ServerRequestInterface) {
+            return null;
+        }
+
+        $parsedBody = $request->getParsedBody();
+        if (is_array($parsedBody) && isset($parsedBody[$name])) {
+            return $parsedBody[$name];
+        }
+
+        return $request->getQueryParams()[$name] ?? null;
+    }
+
+    private function initializeSession(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
     }
 
-    private function destroySession()
+    private function destroySession(): void
     {
         if (session_status() !== PHP_SESSION_NONE) {
             session_destroy();
@@ -198,9 +210,7 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
         // It is much easier for the Backend to manage users.
         // Notice: 'login_status' parameter name cannot be changed!
         // It is essential for BE user authentication.
-
-        /** @var ConfigurationManager $configurationManager */
-        $returnURL = rtrim(GeneralUtility::getIndpEnv('TYPO3_SITE_URL'), '/') . '/' . TYPO3_mainDir . '?login_status=login';
+        $returnURL = rtrim(GeneralUtility::getIndpEnv('TYPO3_SITE_URL'), '/') . '/typo3/?login_status=login';
         return GeneralUtility::locationHeaderUrl($returnURL);
     }
 
@@ -268,7 +278,7 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
      * @return false|array
      * @throws Exception
      */
-    protected function getUserRecord()
+    protected function getUserRecord(): false|array
     {
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable($this->authenticationInformation['db_user']['table']);
@@ -286,14 +296,14 @@ class AzureAdBeService extends AbstractAuthenticationService implements Singleto
                 ),
                 $this->authenticationInformation['db_user']['enable_clause']
             )
-            ->execute()
+            ->executeQuery()
             ->fetchAssociative();
     }
 
     /**
      * @throws InvalidPasswordHashException
      */
-    private function createOrUpdateUserRecord(string $job)
+    private function createOrUpdateUserRecord(string $job): void
     {
         $userFields = [
             'realName' => $this->jsonAccessTokenPayload['name'] ?? '',

@@ -7,10 +7,12 @@ namespace DifferentTechnology\AzureAdBe\Tests\Unit\Service;
 use DifferentTechnology\AzureAdBe\Service\AzureAdBeService;
 use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Token\AccessTokenInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\RequestInterface;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -62,34 +64,14 @@ final class AzureAdBeServiceTest extends UnitTestCase
         parent::tearDown();
     }
 
-    /**
-     * @template T of \ReflectionProperty|\ReflectionMethod
-     * @param T $reflection
-     * @return T
-     */
-    private function makeAccessible(\Reflector $reflection): \Reflector
+    private function setProperty(object $object, string $property, mixed $value): void
     {
-        // Required before PHP 8.1, deprecated since PHP 8.5
-        if (PHP_VERSION_ID < 80100) {
-            $reflection->setAccessible(true);
-        }
-        return $reflection;
+        (new \ReflectionProperty(AzureAdBeService::class, $property))->setValue($object, $value);
     }
 
-    /**
-     * @param mixed $value
-     */
-    private function setProperty(object $object, string $property, $value): void
+    private function callMethod(object $object, string $method, array $arguments = []): mixed
     {
-        $this->makeAccessible(new \ReflectionProperty(AzureAdBeService::class, $property))->setValue($object, $value);
-    }
-
-    /**
-     * @return mixed
-     */
-    private function callMethod(object $object, string $method, array $arguments = [])
-    {
-        return $this->makeAccessible(new \ReflectionMethod(AzureAdBeService::class, $method))->invokeArgs($object, $arguments);
+        return (new \ReflectionMethod(AzureAdBeService::class, $method))->invokeArgs($object, $arguments);
     }
 
     /**
@@ -97,14 +79,12 @@ final class AzureAdBeServiceTest extends UnitTestCase
      */
     private function mergeUserFields(array $userFields, array $configuration): array
     {
-        $method = $this->makeAccessible(new \ReflectionMethod(AzureAdBeService::class, 'mergeUserFields'));
+        $method = new \ReflectionMethod(AzureAdBeService::class, 'mergeUserFields');
         $method->invokeArgs(new AzureAdBeService(), [&$userFields, $configuration]);
         return $userFields;
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function mergeUserFieldsOverridesPlainFields(): void
     {
         $result = $this->mergeUserFields(
@@ -115,9 +95,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame(['realName' => 'Jane Doe', 'lang' => 'de', 'options' => 3], $result);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function mergeUserFieldsAppendsUsergroupStringAndRemovesDuplicates(): void
     {
         $result = $this->mergeUserFields(
@@ -128,9 +106,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame('1,2,3', $result['usergroup']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function mergeUserFieldsAppendsUsergroupArray(): void
     {
         $result = $this->mergeUserFields(
@@ -141,9 +117,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame('1,4', $result['usergroup']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function mergeUserFieldsAppendsUsergroupWithoutLeadingCommaWhenNoneExist(): void
     {
         $result = $this->mergeUserFields([], ['append' => ['usergroup' => '5,6']]);
@@ -151,9 +125,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame('5,6', $result['usergroup']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function mergeUserFieldsConcatenatesOtherAppendedFields(): void
     {
         $result = $this->mergeUserFields(
@@ -165,9 +137,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame('1', $result['file_mountpoints']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function mergeUserFieldsAppliesOverridesBeforeAppends(): void
     {
         $result = $this->mergeUserFields(
@@ -178,9 +148,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame('7,8', $result['usergroup']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getGroupsFollowsNextLinkUntilAllPagesAreFetched(): void
     {
         $firstUrl = 'https://graph.microsoft.com/v1.0/me/memberOf';
@@ -222,9 +190,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         );
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getGroupsReturnsEmptyArrayWhenResponseHasNoValue(): void
     {
         $provider = $this->createMock(GenericProvider::class);
@@ -285,9 +251,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         GeneralUtility::addInstance(ConnectionPool::class, $connectionPool);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getUserInsertsNewUserAndReturnsCreatedRecord(): void
     {
         $record = ['uid' => 12, 'username' => 'jane.doe@example.com'];
@@ -313,9 +277,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         );
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getUserUpdatesExistingUserWithoutTouchingCredentials(): void
     {
         $record = ['uid' => 12, 'username' => 'jane.doe@example.com'];
@@ -329,9 +291,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame(['realName', 'tstamp', 'tx_azure_ad_be_payload_user'], array_keys($writtenFields));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getUserMergesBeUserDefaults(): void
     {
         $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['be_user_defaults'] = [
@@ -348,9 +308,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame('1,2', $writtenFields['usergroup']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getUserAppliesConfigurationOfMatchingEntraIdGroupsOnly(): void
     {
         $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['be_user_defaults'] = [
@@ -378,9 +336,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame(json_encode($entraGroups), $writtenFields['tx_azure_ad_be_payload_groups']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getUserMatchesGroupsOnConfiguredKeyIdentifier(): void
     {
         $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groupsKeyIdentifier'] = 'id';
@@ -398,9 +354,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame('5', $writtenFields['usergroup']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getUserReturnsNullWhenNotLoggingIn(): void
     {
         $subject = new AzureAdBeService();
@@ -410,9 +364,7 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertNull($subject->getUser());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getUserReturnsNullWithoutLoginIdentifier(): void
     {
         $subject = new AzureAdBeService();
@@ -421,17 +373,13 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertNull($subject->getUser());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function authUserReturnsContinueCodeWithoutLoginIdentifier(): void
     {
         self::assertSame(100, (new AzureAdBeService())->authUser([]));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function authUserAuthenticatesOnceLoginIdentifierIsSet(): void
     {
         $subject = new AzureAdBeService();
@@ -440,15 +388,52 @@ final class AzureAdBeServiceTest extends UnitTestCase
         self::assertSame(300, $subject->authUser([]));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function processLoginDataSkipsEntraIdWhenPasswordWasSubmitted(): void
     {
         $loginData = ['uname' => 'admin', 'uident' => 'password'];
 
         self::assertFalse((new AzureAdBeService())->processLoginData($loginData, 'normal'));
         self::assertSame(['uname' => 'admin', 'uident' => 'password'], $loginData);
+    }
+
+    private function getRequestParameter(?ServerRequest $request, string $name): mixed
+    {
+        $authInfo = self::AUTH_INFO;
+        if ($request !== null) {
+            $authInfo['request'] = $request;
+        }
+        $subject = new AzureAdBeService();
+        $subject->initAuth('processLoginDataBE', [], $authInfo, null);
+
+        return $this->callMethod($subject, 'getRequestParameter', [$name]);
+    }
+
+    #[Test]
+    public function getRequestParameterPrefersSubmittedFormOverQueryString(): void
+    {
+        $request = (new ServerRequest('https://example.com/typo3/', 'POST'))
+            ->withQueryParams(['ad_email' => 'query@example.com'])
+            ->withParsedBody(['ad_email' => 'form@example.com']);
+
+        self::assertSame('form@example.com', $this->getRequestParameter($request, 'ad_email'));
+    }
+
+    #[Test]
+    public function getRequestParameterFallsBackToQueryString(): void
+    {
+        $request = (new ServerRequest('https://example.com/typo3/?login_status=login'))
+            ->withQueryParams(['login_status' => 'login', 'code' => 'auth-code', 'state' => 'abc']);
+
+        self::assertSame('auth-code', $this->getRequestParameter($request, 'code'));
+        self::assertSame('abc', $this->getRequestParameter($request, 'state'));
+        self::assertNull($this->getRequestParameter($request, 'ad_email'));
+    }
+
+    #[Test]
+    public function getRequestParameterReturnsNullWithoutRequest(): void
+    {
+        self::assertNull($this->getRequestParameter(null, 'code'));
     }
 
     private function getAuthorizationScopes(): array
@@ -465,17 +450,13 @@ final class AzureAdBeServiceTest extends UnitTestCase
         return explode(' ', $query['scope']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function oAuthProviderRequestsDefaultScopes(): void
     {
         self::assertSame(['User.Read', 'profile', 'openid', 'email'], $this->getAuthorizationScopes());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function oAuthProviderRequestsDirectoryScopeWhenGroupsAreConfigured(): void
     {
         $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['azure_ad_be']['groups'] = [];

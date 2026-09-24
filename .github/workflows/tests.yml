@@ -12,16 +12,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { typo3: '11.5', php: '7.4' }
-          - { typo3: '11.5', php: '8.1' }
-          - { typo3: '11.5', php: '8.2' }
           - { typo3: '12.4', php: '8.1' }
           - { typo3: '12.4', php: '8.2' }
           - { typo3: '12.4', php: '8.3' }
-    # PHP 7.4 resolves PHPUnit 9.6, which warns that phpunit.xml uses 10.5-only
-    # settings. The warning is harmless: the test suite and failure rules still apply.
+          - { typo3: '13.4', php: '8.2' }
+          - { typo3: '13.4', php: '8.3' }
+          - { typo3: '13.4', php: '8.4' }
+    # PHP 8.2+ resolves PHPUnit 11, which reports a deprecation because phpunit.xml
+    # uses the 10.5 schema. It is kept so PHP 8.1 (PHPUnit 10) can still read it.
     env:
-      # Every public TYPO3 11.5/12.4 release has security advisories against it,
+      # Every public TYPO3 12.4/13.4 release has security advisories against it,
       # which Composer blocks by default. Only affects this test install.
       COMPOSER_NO_BLOCKING: 1
     steps:
@@ -35,7 +35,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require --no-update "typo3/cms-core:^${{ matrix.typo3 }}"
+          composer require --no-update \
+            "typo3/cms-core:^${{ matrix.typo3 }}" \
+            "typo3/cms-backend:^${{ matrix.typo3 }}" \
+            "typo3/cms-fluid:^${{ matrix.typo3 }}"
           composer update --no-interaction --no-progress
 
       - name: Run unit tests

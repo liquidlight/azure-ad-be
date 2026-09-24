@@ -7,7 +7,9 @@
   "require": {
     "ext-json": "*",
     "league/oauth2-client": "^2.6",
-    "typo3/cms-core": "^11.5 || ^12.4"
+    "typo3/cms-core": "^12.4 || ^13.4",
+    "typo3/cms-backend": "^12.4 || ^13.4",
+    "typo3/cms-fluid": "^12.4 || ^13.4"
   },
   "autoload": {
     "psr-4": {
@@ -26,7 +28,7 @@
     }
   },
   "require-dev": {
-    "typo3/testing-framework": "^7.0"
+    "typo3/testing-framework": "^8.2"
   },
   "config": {
     "lock": false,
