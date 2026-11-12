@@ -15,6 +15,21 @@
       <trans-unit id="be_users.tx_azure_ad_be_payload_groups">
         <source>Azure Group JSON Payload</source>
       </trans-unit>
+
+			<!-- fake-mfa-provider -->
+      <trans-unit id="fake-mfa-provider.title">
+        <source>Azure Fake MFA Provider</source>
+      </trans-unit>
+      <trans-unit id="fake-mfa-provider.description">
+        <source>Azure Fake MFA Provider</source>
+      </trans-unit>
+      <trans-unit id="fake-mfa-provider.description">
+        <source>@todo description</source>
+      </trans-unit>
+      <trans-unit id="fake-mfa-provider.setupInstructions">
+        <source>@todo setupInstructions</source>
+      </trans-unit>
+
     </body>
   </file>
 </xliff>

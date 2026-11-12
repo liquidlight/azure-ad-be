@@ -1,0 +1,14 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  DifferentTechnology\AzureAdBe\Authentication\Mfa\FakeMfaProvider:
+    tags:
+      - name: mfa.provider
+        identifier: 'fake-mfa-provider'
+        title: 'LLL:EXT:azure_ad_be/Resources/Private/Language/locallang.xlf:fake-mfa-provider.title'
+        description: 'LLL:EXT:azure_ad_be/Resources/Private/Language/locallang.xlf:fake-mfa-provider.description'
+        setupInstructions: 'LLL:EXT:azure_ad_be/Resources/Private/Language/locallang.xlf:fake-mfa-provider.setupInstructions'
+        icon: 'actions-brand-windows'
