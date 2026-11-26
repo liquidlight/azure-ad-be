@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace LiquidLight\EntraIdBe\Tests\Unit\Service;
 
+use LiquidLight\EntraIdBe\EventListener\SkipSudoModeAfterRecentSignIn;
 use LiquidLight\EntraIdBe\Service\EntraIdBeService;
 use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
@@ -448,6 +451,72 @@ final class EntraIdBeServiceTest extends UnitTestCase
         parse_str((string)parse_url($provider->getAuthorizationUrl(), PHP_URL_QUERY), $query);
 
         return explode(' ', $query['scope']);
+    }
+
+    private function getRedirectToEntraId(array $cookies): ResponseInterface
+    {
+        $_ENV['TYPO3_ENTRA_ID_BE_CLIENT_ID'] = 'client-id';
+        $_ENV['TYPO3_ENTRA_ID_BE_CLIENT_SECRET'] = 'client-secret';
+        $_ENV['TYPO3_ENTRA_ID_BE_URL_AUTHORIZE'] = 'https://login.example.com/authorize';
+        $_ENV['TYPO3_ENTRA_ID_BE_URL_ACCESS_TOKEN'] = 'https://login.example.com/token';
+
+        $request = (new ServerRequest('https://example.com/typo3/login', 'POST'))
+            ->withParsedBody(['ad_email' => 'jane.doe@example.com'])
+            ->withCookieParams($cookies);
+        $subject = $this->getMockBuilder(EntraIdBeService::class)
+            ->onlyMethods(['getReturnURL'])
+            ->getMock();
+        $subject->method('getReturnURL')->willReturn('https://example.com/typo3/?login_status=login');
+        $subject->initAuth('processLoginDataBE', [], [...self::AUTH_INFO, 'request' => $request], null);
+
+        $loginData = [];
+        try {
+            $subject->processLoginData($loginData, 'normal');
+        } catch (PropagateResponseException $exception) {
+            return $exception->getResponse();
+        }
+
+        self::fail('Expected a redirect to Entra ID');
+    }
+
+    private function getRedirectQuery(ResponseInterface $response): array
+    {
+        parse_str((string)parse_url($response->getHeaderLine('Location'), PHP_URL_QUERY), $query);
+
+        return $query;
+    }
+
+    #[Test]
+    public function processLoginDataReusesMicrosoftSessionByDefault(): void
+    {
+        $response = $this->getRedirectToEntraId([]);
+
+        self::assertSame('jane.doe@example.com', $this->getRedirectQuery($response)['login_hint']);
+        self::assertArrayNotHasKey('prompt', $this->getRedirectQuery($response));
+        self::assertFalse($response->hasHeader('Set-Cookie'));
+    }
+
+    #[Test]
+    public function processLoginDataPromptsForCredentialsWhenAskedToSignInAgain(): void
+    {
+        $response = $this->getRedirectToEntraId([SkipSudoModeAfterRecentSignIn::PROMPT_LOGIN_COOKIE => '1']);
+
+        self::assertSame('login', $this->getRedirectQuery($response)['prompt']);
+        // The cookie is removed, so later sign-ins reuse the Microsoft session again
+        self::assertStringStartsWith(
+            SkipSudoModeAfterRecentSignIn::PROMPT_LOGIN_COOKIE . '=deleted;',
+            $response->getHeaderLine('Set-Cookie')
+        );
+    }
+
+    #[Test]
+    public function hasAuthenticatedUserIsFalseUntilLoginIdentifierIsSet(): void
+    {
+        $subject = new EntraIdBeService();
+        self::assertFalse($subject->hasAuthenticatedUser());
+
+        $this->setProperty($subject, 'loginIdentifier', 'jane.doe@example.com');
+        self::assertTrue($subject->hasAuthenticatedUser());
     }
 
     #[Test]

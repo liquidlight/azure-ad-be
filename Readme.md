@@ -146,6 +146,30 @@ setup {
 
 These can be wrapped in a condition based on user group, if you have a mix of SSO and normal users
 
+## Sudo mode
+
+Some backend actions ask the user to confirm their password first (sudo mode), such as editing backend users or entering admin mode with [Elevate to Admin](https://github.com/liquidlight/typo3-elevate-to-admin). Users who signed in with Entra ID don't know their TYPO3 password, so this package skips the password dialog for them for a set number of minutes after they sign in.
+
+```php
+// Default: 15 minutes
+$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be']['sudoModeWindow'] = 15;
+```
+
+After that time:
+
+- **Entering admin mode** with Elevate to Admin shows a message asking the user to sign out and sign in again. That next sign-in asks for their Microsoft credentials again, rather than reusing an existing Microsoft session
+- **Other actions** are allowed if the user is already an admin, otherwise TYPO3's password dialog is shown
+
+Sessions signed in with a username and password are not affected.
+
+The sign-in time is stored in the backend session, so this does not apply to:
+
+- Sessions which were already signed in before this feature was installed; the user needs to sign out and sign in again
+- Users with TYPO3's own multi-factor authentication enabled, as the sign-in then finishes on the MFA step rather than the Entra ID one
+
+> [!NOTE]
+> TYPO3 skips sudo mode completely in the `Development` context, so test this in a `Production` or `Testing` context.
+
 ## Migrating from different-technology/azure-ad-be
 
 This package replaces `different-technology/azure-ad-be` (and the Liquid Light fork of it). Everything has been renamed, so:

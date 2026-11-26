@@ -9,7 +9,9 @@ defined('TYPO3') or die();
      */
     $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ll_entra_id_be'] = [
         // What key should be used to identify groups
-        'groupsKeyIdentifier' => 'displayName'
+        'groupsKeyIdentifier' => 'displayName',
+        // How many minutes after an Entra ID sign-in sudo mode is skipped
+        'sudoModeWindow' => 15,
     ];
 
     $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][1650912385] = [

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace LiquidLight\EntraIdBe\Service;
 
+use LiquidLight\EntraIdBe\EventListener\SkipSudoModeAfterRecentSignIn;
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Crypto\Random;
 use Doctrine\DBAL\Exception;
@@ -92,14 +93,26 @@ class EntraIdBeService extends AbstractAuthenticationService implements Singleto
             $this->oAuthProvider = $this->getOAuthProvider($this->getReturnURL());
             if (!$authorizationCode) {
                 $email = $this->getRequestParameter('ad_email');
-                $authorizationUrl = $this->oAuthProvider->getAuthorizationUrl([
+                $authorizationOptions = [
                     'login_hint' => $email,
-                ]);
+                ];
+
+                // Asked to sign in again (e.g. to enter admin mode), so don't reuse the Microsoft session
+                $promptLogin = $this->hasRequestCookie(SkipSudoModeAfterRecentSignIn::PROMPT_LOGIN_COOKIE);
+                if ($promptLogin) {
+                    $authorizationOptions['prompt'] = 'login';
+                }
+
+                $authorizationUrl = $this->oAuthProvider->getAuthorizationUrl($authorizationOptions);
 
                 $_SESSION['state'] = $this->oAuthProvider->getState();
 
                 // Redirect to login
-                throw new PropagateResponseException(new RedirectResponse($authorizationUrl, 303));
+                $response = new RedirectResponse($authorizationUrl, 303);
+                if ($promptLogin) {
+                    $response = $response->withAddedHeader('Set-Cookie', SkipSudoModeAfterRecentSignIn::buildPromptLoginCookie(0));
+                }
+                throw new PropagateResponseException($response);
 
             } else {
                 $state = $this->getRequestParameter('state');
@@ -180,6 +193,24 @@ class EntraIdBeService extends AbstractAuthenticationService implements Singleto
         }
 
         return $request->getQueryParams()[$name] ?? null;
+    }
+
+    protected function hasRequestCookie(string $name): bool
+    {
+        $request = $this->authenticationInformation['request'] ?? null;
+        if (!$request instanceof ServerRequestInterface) {
+            return false;
+        }
+
+        return isset($request->getCookieParams()[$name]);
+    }
+
+    /**
+     * Whether a user was authenticated through Entra ID during this request
+     */
+    public function hasAuthenticatedUser(): bool
+    {
+        return $this->loginIdentifier !== '';
     }
 
     private function initializeSession(): void

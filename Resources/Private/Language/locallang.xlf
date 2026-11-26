@@ -15,6 +15,10 @@
       <trans-unit id="be_users.tx_entraidbe_payload_groups">
         <source>Entra ID Group JSON Payload</source>
       </trans-unit>
+
+      <trans-unit id="sudoMode.signInAgain">
+        <source>You signed in with Microsoft more than %d minutes ago. Sign out and sign in again to enter admin mode.</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

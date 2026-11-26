@@ -1,0 +1,17 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  LiquidLight\EntraIdBe\EventListener\RecordEntraIdSignIn:
+    tags:
+      - name: event.listener
+        identifier: 'll-entra-id-be/record-entra-id-sign-in'
+        event: TYPO3\CMS\Core\Authentication\Event\AfterUserLoggedInEvent
+
+  LiquidLight\EntraIdBe\EventListener\SkipSudoModeAfterRecentSignIn:
+    tags:
+      - name: event.listener
+        identifier: 'll-entra-id-be/skip-sudo-mode-after-recent-sign-in'
+        event: TYPO3\CMS\Backend\Security\SudoMode\Event\SudoModeRequiredEvent
